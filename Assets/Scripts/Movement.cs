@@ -103,7 +103,6 @@ public class Movement : MonoBehaviour
         // Use the statemachine
         StateMachine(currentState);
 
-
         // Can enter the climbing state from any state
         // You may want to move this depending on the states you add
         if (coll.onWall && Input.GetButton("Fire2") && canMove)
@@ -127,18 +126,24 @@ public class Movement : MonoBehaviour
             wallSlide = false;
         }
 
-        // When on the ground and not dashing
-        // You might want to move these to a state
-        if (coll.onGround && !isDashing)
-        {
-            wallJumped = false;
-            GetComponent<BetterJumping>().enabled = true;
-        }
-
 
         // Jump when hitting the space bar
+        if (Input.GetButtonDown("Jump"))
+        {
+            // Sets the jump animation
+            anim.SetTrigger("jump");
 
-     
+            // What states can you jump from?
+
+            // Maybe move to IDLE and/or RUNNING
+            if (coll.onGround)
+                Jump(Vector2.up, false);
+
+            // Maybe move to an ON_WALL state
+            if (coll.onWall && !coll.onGround)
+                WallJump();
+        }
+
         // If left click and if dash is not on cooldown
         if (Input.GetButtonDown("Fire1") && !hasDashed)
         {
@@ -147,14 +152,6 @@ public class Movement : MonoBehaviour
 
                 // Dash using raw input values
                 Dash(xRaw, yRaw);
-        }
-
-        // When you land on the ground
-        if (coll.onGround && !groundTouch)
-        {
-            // GroundTouch() resets the dash, as you can only dash once per jump
-            GroundTouch();
-            groundTouch = true;
         }
 
         // When you have left the ground
@@ -198,17 +195,23 @@ public class Movement : MonoBehaviour
                     currentState = PlayerState.RUNNING;
                 }
 
-                if (Input.GetButtonDown("Jump"))
+                // When on the ground and not dashing
+                // You might want to move these to a state
+                if (coll.onGround && !isDashing)
                 {
-                    // Sets the jump animation
-                    anim.SetTrigger("jump");
-
-                    // What states can you jump from?
-
-                    // Maybe move to IDLE and/or RUNNING
-                    if (coll.onGround)
-                        Jump(Vector2.up, false);
+                    wallJumped = false;
+                    GetComponent<BetterJumping>().enabled = true;
                 }
+
+                // When you land on the ground
+                if (coll.onGround && !groundTouch)
+                {
+                    // GroundTouch() resets the dash, as you can only dash once per jump
+                    GroundTouch();
+                    groundTouch = true;
+                }
+
+
                 break;
 
             case PlayerState.RUNNING:
@@ -221,18 +224,6 @@ public class Movement : MonoBehaviour
                 if (xInput <= 0.01f || xInput >= 0.01f)
                 {
                     currentState = PlayerState.IDLE;
-                }
-
-                if (Input.GetButtonDown("Jump"))
-                {
-                    // Sets the jump animation
-                    anim.SetTrigger("jump");
-
-                    // What states can you jump from?
-
-                    // Maybe move to IDLE and/or RUNNING
-                    if (coll.onGround)
-                        Jump(Vector2.up, false);
                 }
 
                 break;
@@ -267,6 +258,8 @@ public class Movement : MonoBehaviour
                 {
                     currentState = PlayerState.ON_WALL;
 
+                    // Maybe there could be an ON_WALL state?
+                    // Try it out!
                 }
 
 
@@ -283,18 +276,8 @@ public class Movement : MonoBehaviour
 
                 //Leave Condition:  
                 if (!coll.onWall || coll.onGround)
-                {
                     wallSlide = false;
-                    currentState = PlayerState.IDLE;
-                }
-                
-                if (Input.GetKeyDown("Jump"))
-                {
-                 if (coll.onWall && !coll.onGround)
-                    WallJump();
-                }
-                // Maybe move to an ON_WALL state
-
+                currentState = PlayerState.IDLE;
 
                 break;
 
